@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
+use App\Models\User;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Illuminate\Database\Seeder;
 
 class RolePermissionSeeder extends Seeder
 {
@@ -14,40 +14,34 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Define roles
-        $roles = [
-            'admin',
-            'operator'
-        ];
+        try {
+            // Buat role Admin jika belum ada
+            $adminRole = Role::firstOrCreate(['name' => 'Admin']);
 
-        // Define permissions
-        $permissions = [
-            'view budgets',
-            'create budgets',
-            'edit budgets',
-            'delete budgets',
-            'view reports',
-            'create expenses',
-            'edit expenses',
-            'delete expenses',
-        ];
+            // Ambil semua permissions yang ada
+            $permissions = Permission::all();
 
-        // Create roles
-        foreach ($roles as $roleName) {
-            $role = Role::firstOrCreate(['name' => $roleName]);
-        }
-
-        // Create permissions and assign to roles
-        foreach ($permissions as $permissionName) {
-            $permission = Permission::firstOrCreate(['name' => $permissionName]);
-
-            if ($permissionName === 'view reports') {
-                $role = Role::where('name', 'operator')->first();
-                $role->givePermissionTo($permission);
-            } else {
-                $role = Role::where('name', 'admin')->first();
-                $role->givePermissionTo($permission);
+            if ($permissions->isNotEmpty()) {
+                // Hubungkan role Admin dengan semua permission
+                $adminRole->syncPermissions($permissions);
             }
+
+            // Ambil user pertama sebagai contoh (ubah sesuai kebutuhan)
+            $adminUser = User::first();
+
+            if ($adminUser) {
+                // Berikan role Admin ke user
+                $adminUser->assignRole($adminRole);
+
+                // (Opsional) Berikan semua permissions langsung ke user
+                foreach ($permissions as $permission) {
+                    $adminUser->givePermissionTo($permission);
+                }
+            } else {
+                $this->command->warn('Tidak ada user ditemukan untuk diberikan role Admin.');
+            }
+        } catch (\Exception $e) {
+            $this->command->error('Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 }

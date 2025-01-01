@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
             'password' => Hash::make('password')
         ]);
 
-        $adminUser->assignRole('admin');
+        $adminUser->assignRole('Admin');
 
         // Create operator user
         $operatorUser = User::firstOrCreate([
